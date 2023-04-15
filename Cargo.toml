@@ -1,0 +1,10 @@
+[package]
+name = "dropboxignore-rs"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+xattr = "1.0.0"
+clap.version = "4.2.2"
+clap.features = ["derive"]
