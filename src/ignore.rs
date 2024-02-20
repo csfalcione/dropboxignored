@@ -5,7 +5,13 @@ pub fn ignore_path(path: &PathBuf) -> Result<(), std::io::Error> {
 }
 
 pub fn unignore_path(path: &PathBuf) -> Result<(), std::io::Error> {
-    xattr::remove(path, "user.com.dropbox.ignored")
+    check_path(path).and_then(|has_attr| {
+        if has_attr {
+            xattr::remove(path, "user.com.dropbox.ignored")
+        } else {
+            Ok(())
+        }
+    })
 }
 
 pub fn check_path(path: &PathBuf) -> Result<bool, std::io::Error> {
