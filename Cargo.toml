@@ -8,3 +8,4 @@ edition = "2021"
 xattr = "1.0.0"
 clap.version = "4.2.2"
 clap.features = ["derive"]
+notify = "6.1.1"

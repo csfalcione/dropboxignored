@@ -1,7 +1,10 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+use crate::watcher::IgnoreDecision;
+
 mod ignore;
+mod watcher;
 
 #[derive(Parser)]
 struct Cli {
@@ -20,6 +23,9 @@ enum Commands {
     /// Check whether the given file is ignored.
     #[command(visible_alias("c"))]
     Check { path: PathBuf },
+    /// Watch a given directory, ignoring and unignoring files as they're created and renamed.
+    #[command(visible_alias("w"))]
+    Watch { path: PathBuf },
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -41,6 +47,22 @@ fn main() -> Result<(), std::io::Error> {
             } else {
                 println!("{} is not ignored", path.display());
             }
+        }
+        Commands::Watch { path } => {
+            println!("attempting to watch {}", path.display());
+            watcher::watch(path, |path| {
+                if path.is_dir() {
+                    if path.ends_with("node_modules") {
+                        return IgnoreDecision::Ignore;
+                    }
+                    if path.iter().any(|part| part == "node_modules") {
+                        return IgnoreDecision::None;
+                    }
+                    return IgnoreDecision::Unignore;
+                }
+                return IgnoreDecision::None;
+            })
+            .unwrap();
         }
     }
     Ok(())
