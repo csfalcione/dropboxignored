@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use crate::watcher::IgnoreDecision;
 
 mod ignore;
+mod ignorefile;
 mod watcher;
 
 #[derive(Parser)]
