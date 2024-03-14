@@ -3,6 +3,7 @@ use nom::bytes::complete::tag;
 use nom::bytes::complete::take_while1;
 use nom::character::is_alphanumeric;
 use nom::combinator::all_consuming;
+use nom::combinator::verify;
 use nom::multi::many0;
 use nom::multi::many1_count;
 use nom::IResult;
@@ -23,7 +24,8 @@ pub enum MatchRule {
 }
 
 pub fn parse_line(line: &str) -> IResult<&str, Vec<MatchRule>> {
-    let separator = tag("/").map(|_| MatchRule::Separator);
+    let separator =
+        verify(many1_count(tag("/")), |count| *count == 1).map(|_| MatchRule::Separator);
     let stars = many1_count(tag("*")).map(|count| {
         if count == 1 {
             return MatchRule::SingleStar;
@@ -64,5 +66,10 @@ mod test {
     #[test]
     fn test_empty() {
         assert_eq!(parse_line(""), Ok(("", vec![])));
+    }
+
+    #[test]
+    fn test_double_slash() {
+        assert!(parse_line("//").is_err());
     }
 }
