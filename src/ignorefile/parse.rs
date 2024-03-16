@@ -21,6 +21,8 @@ pub enum MatchRule {
     QuestionMark,
     /// Literal '/' delimiting directories.
     Separator,
+    /// Leading '#'.
+    Comment,
 }
 
 pub fn parse_line(line: &str) -> IResult<&str, Vec<MatchRule>> {
@@ -38,7 +40,10 @@ pub fn parse_line(line: &str) -> IResult<&str, Vec<MatchRule>> {
     let text = take_while1(|c| c == ('_') || is_alphanumeric(c as u8))
         .map(|text: &str| MatchRule::Text(text.to_string()));
 
-    all_consuming(many0(alt((separator, stars, question_mark, text))))(line)
+    let comment = tag("#").map(|_| vec![MatchRule::Comment]);
+    let path = all_consuming(many0(alt((separator, stars, question_mark, text))));
+
+    alt((comment, path))(line)
 }
 
 #[cfg(test)]
@@ -71,5 +76,10 @@ mod test {
     #[test]
     fn test_double_slash() {
         assert!(parse_line("//").is_err());
+    }
+
+    #[test]
+    fn test_comment() {
+        assert_eq!(parse_line("#"), Ok(("", vec![Comment])));
     }
 }
