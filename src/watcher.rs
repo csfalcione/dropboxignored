@@ -8,6 +8,7 @@ use crate::ignore::{ignore_path, unignore_path};
 pub enum IgnoreDecision {
     None,
     Ignore,
+    #[allow(dead_code)]
     Unignore,
 }
 

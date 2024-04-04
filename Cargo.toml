@@ -10,3 +10,4 @@ clap.version = "4.2.2"
 clap.features = ["derive"]
 notify = "6.1.1"
 nom = "7.1.3"
+regex = "1.10.4"
