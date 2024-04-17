@@ -1,8 +1,12 @@
 [package]
-name = "dropboxignore-rs"
+name = "dropboxignored"
 version = "0.1.0"
 edition = "2021"
-
+license-file = "LICENSE"
+description = "A lot like dropboxignore but with a file watcher"
+repository = "https://github.com/csfalcione/dropboxignored"
+readme = "README.md"
+keywords = ["dropbox", "daemon", "dropboxignore"]
 
 [dependencies]
 xattr = "1.0.0"
