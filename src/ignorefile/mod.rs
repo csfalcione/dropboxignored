@@ -18,6 +18,7 @@ struct MatchLine {
 impl MatchLine {
     pub fn new(base_dir: &PathBuf, line: &str) -> Result<MatchLine, String> {
         let rules = parse::parse_line(line).map_err(|e| format!("{e}"))?.1;
+        let rules = MatchLine::transform_parsed_rules(rules);
 
         let pattern = MatchLine::create_regex(base_dir, &rules)?;
 
@@ -35,6 +36,17 @@ impl MatchLine {
             }
         };
         self.pattern.is_match(candidate)
+    }
+
+    fn transform_parsed_rules(mut rules: Vec<MatchRule>) -> Vec<MatchRule> {
+        if MatchLine::is_relative(&rules) {
+            // Prepend a separator and doublestar to turn the relative rule into an absolute rule.
+            rules
+                .splice(0..0, [MatchRule::Separator, MatchRule::DoubleStar])
+                .for_each(drop);
+        }
+
+        rules
     }
 
     fn create_regex(base_dir: &PathBuf, rules: &[MatchRule]) -> Result<Regex, String> {
@@ -78,7 +90,7 @@ impl MatchLine {
             ""
         };
 
-        let regex = format!("{}{}{}$", prefix, relative_modifier, suffix);
+        let regex = format!("{prefix}{relative_modifier}{suffix}$");
         println!("{:?} -> {}", rules, regex);
 
         Regex::new(&regex).map_err(|e| format!("{e}"))
@@ -88,7 +100,8 @@ impl MatchLine {
         rules
             .iter()
             .enumerate()
-            .any(|(idx, rule)| *rule == MatchRule::Separator && idx != rules.len() - 1)
+            // `rule` being a Separator implies that we're on the last index.
+            .all(|(idx, rule)| *rule != MatchRule::Separator || idx == rules.len() - 1)
     }
 
     fn dir_only(&self) -> bool {
@@ -98,5 +111,65 @@ impl MatchLine {
                 .map(|last_rule| *last_rule == MatchRule::Separator),
             Some(true)
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod build_matcher {
+        use super::*;
+
+        #[test]
+        fn test_absolute() -> Result<(), String> {
+            let matcher = build_matcher(&PathBuf::from("/base"), "/**/node_modules")?;
+
+            assert!(matcher(&PathBuf::from(
+                "/base/code/js/project/node_modules"
+            )));
+
+            Ok(())
+        }
+
+        #[test]
+        fn test_relative() -> Result<(), String> {
+            let matcher = build_matcher(&PathBuf::from("/base"), "node_modules")?;
+
+            assert!(matcher(&PathBuf::from(
+                "/base/code/js/project/node_modules"
+            )));
+
+            Ok(())
+        }
+    }
+
+    mod is_relative {
+        use super::*;
+
+        fn text(string: &str) -> MatchRule {
+            MatchRule::Text(string.to_string())
+        }
+
+        #[test]
+        fn test_name_only() {
+            assert!(MatchLine::is_relative(&[text("path")]))
+        }
+
+        #[test]
+        fn test_trailing_separator() {
+            assert!(MatchLine::is_relative(&[
+                text("path"),
+                MatchRule::Separator
+            ]))
+        }
+
+        #[test]
+        fn test_absolute() {
+            assert!(!MatchLine::is_relative(&[
+                MatchRule::Separator,
+                text("path")
+            ]))
+        }
     }
 }
