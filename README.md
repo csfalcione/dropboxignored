@@ -1,5 +1,10 @@
 # dropboxignored
 
+## Installation
+```
+cargo install dropboxignored
+```
+
 ## Usage
 
 #### Overall
