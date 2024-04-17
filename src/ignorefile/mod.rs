@@ -26,7 +26,8 @@ impl MatchLine {
     }
 
     pub fn matches(&self, candidate: &PathBuf) -> bool {
-        if self.dir_only() && !candidate.is_dir() {
+        if self.dir_only() && candidate.exists() && !candidate.is_dir() {
+            // Check that the candidate exists so that unit tests don't rely on filesystem state.
             return false;
         }
         let candidate: &str = match candidate.to_str() {
@@ -44,6 +45,12 @@ impl MatchLine {
             rules
                 .splice(0..0, [MatchRule::Separator, MatchRule::DoubleStar])
                 .for_each(drop);
+        }
+
+        if !matches!(rules.get(0), Some(MatchRule::Separator)) {
+            // Every matchline should start with a separator so that the fully-built regex will have the
+            // correct OS-specific separator between the base directory and the specified rules.
+            rules.insert(0, MatchRule::Separator);
         }
 
         rules
@@ -124,6 +131,28 @@ mod tests {
         #[test]
         fn test_absolute() -> Result<(), String> {
             let matcher = build_matcher(&PathBuf::from("/base"), "/**/node_modules")?;
+
+            assert!(matcher(&PathBuf::from(
+                "/base/code/js/project/node_modules"
+            )));
+
+            Ok(())
+        }
+
+        #[test]
+        fn test_absolute_with_trailing_separator() -> Result<(), String> {
+            let matcher = build_matcher(&PathBuf::from("/base"), "/**/node_modules/")?;
+
+            assert!(matcher(&PathBuf::from(
+                "/base/code/js/project/node_modules"
+            )));
+
+            Ok(())
+        }
+
+        #[test]
+        fn test_absolute_without_leading_separator() -> Result<(), String> {
+            let matcher = build_matcher(&PathBuf::from("/base"), "code/**/node_modules")?;
 
             assert!(matcher(&PathBuf::from(
                 "/base/code/js/project/node_modules"
