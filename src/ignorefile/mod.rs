@@ -2,7 +2,6 @@ mod parse;
 
 use std::path::PathBuf;
 
-use nom::Finish;
 use parse::MatchRule;
 use regex::Regex;
 
@@ -18,10 +17,7 @@ struct MatchLine {
 
 impl MatchLine {
     pub fn new(base_dir: &PathBuf, line: &str) -> Result<MatchLine, String> {
-        let rules = parse::parse_line(line)
-            .finish()
-            .map_err(|e| format!("{e}"))?
-            .1;
+        let rules = parse::parse_line(line).map_err(|e| format!("{e}"))?.1;
 
         let pattern = MatchLine::create_regex(base_dir, &rules)?;
 

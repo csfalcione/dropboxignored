@@ -4,9 +4,10 @@ use nom::bytes::complete::take_while1;
 use nom::character::is_alphanumeric;
 use nom::combinator::all_consuming;
 use nom::combinator::verify;
+use nom::error::Error;
 use nom::multi::many0;
 use nom::multi::many1_count;
-use nom::IResult;
+use nom::Finish;
 use nom::Parser;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,7 +26,7 @@ pub enum MatchRule {
     Comment,
 }
 
-pub fn parse_line(line: &str) -> IResult<&str, Vec<MatchRule>> {
+pub fn parse_line(line: &str) -> Result<(&str, Vec<MatchRule>), Error<&str>> {
     let separator =
         verify(many1_count(tag("/")), |count| *count == 1).map(|_| MatchRule::Separator);
     let stars = many1_count(tag("*")).map(|count| {
@@ -43,7 +44,7 @@ pub fn parse_line(line: &str) -> IResult<&str, Vec<MatchRule>> {
     let comment = tag("#").map(|_| vec![MatchRule::Comment]);
     let path = all_consuming(many0(alt((separator, stars, question_mark, text))));
 
-    alt((comment, path))(line)
+    alt((comment, path))(line).finish()
 }
 
 #[cfg(test)]
