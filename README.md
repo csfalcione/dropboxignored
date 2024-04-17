@@ -1,8 +1,10 @@
 # dropboxignored
 
 ## Usage
+
+#### Overall
 ```
-Usage: dropboxignore-rs <COMMAND>
+Usage: dropboxignored <COMMAND>
 
 Commands:
   ignore    Ignore given file [aliases: i]
@@ -14,3 +16,19 @@ Commands:
 Options:
   -h, --help  Print help
 ```
+
+#### Explicitly checking and marking files
+```
+dropboxignored check <PATH>
+dropboxignored ignore <PATH>
+dropboxignored unignore <PATH>
+```
+
+#### File watcher
+```
+dropboxignored watch [OPTIONS] <PATH>
+
+Options:
+  -f <IGNORE_FILE>
+```
+Where PATH is your dropbox directory (or a subdir). `IGNORE_FILE` defaults to a `.dropboxignore` file in the `PATH` directory if the `-f` switch isn't specified.
